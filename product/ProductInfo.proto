@@ -2,17 +2,48 @@ syntax = "proto3";
 option go_package = './product';
 package product;
 
+import 'google/protobuf/any.proto';
+// import other messages via import <path> command
+
 service ProductInfo {
   rpc addProduct(Product) returns (ProductId);
   rpc getProduct(ProductId) returns (Product);
 }
 
+// enumerations
+enum Type {
+  option allow_alias = true;
+  TYPE_UNSPECIFIED = 0; // default
+  TYPE_MOBILE_PHONE = 1;
+  TYPE_PHONE = 1; // same number refer to different aliases
+  TYPE_LAPTOP = 2;
+  TYPE_PAD = 3;
+  // can also be reserved
+}
+
 message Product {
-  string id = 1;
+  int32 id = 1;
   string name = 2;
-  string description = 3;
+  reserved 3 to 4; // reserved values for deleted numbers
+  reserved "description"; // reserved values for deleted names
+  oneof type { // use of the 'oneof' keyword
+    Type given_type = 5;
+    string other_type = 6;
+  }
+  ProductId productId = 7; // message can have messages inside
+  google.protobuf.Any product_details = 8; // use imported type Any - arbitrary serialized message
+  message Result {
+    bool on_sale = 1;
+    bool sold_out = 2;
+    int32 sell_price = 3;
+    string discount_descripton = 4;
+  } // or nested types
+  repeated Result results = 9; // can be repeated zero or more times, reserve according values.
+  map <string, int32> sell_info = 10; // a kv-store mapped, cannot repeated
+  // can refer to another proto package with additional package specifier
 }
 
 message ProductId {
   string value = 1;
+  Product.Result result = 2; // reuse inside message outside
 }
