@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	greeter "myGoRPC/greeting"
@@ -12,21 +11,24 @@ import (
 type server struct {
 }
 
+const port = ":50051"
+
 func (s *server) SayHello(ctx context.Context, in *greeter.HelloRequest) (*greeter.HelloReply, error) {
 	log.Printf("Received: #{in.GetName()}")
 	return &greeter.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
 func main() {
-	lis, errListen := net.Listen("tcp", fmt.Sprintf(":#{*port}"))
-	if errListen != nil {
-		log.Fatalf("Failed to listen: #{err}")
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Println("Failed to listen at port " + port)
+		return
 	}
 	s := grpc.NewServer()
 	greeter.RegisterGreeterServer(s, &server{})
-	log.Printf("Server listening at #{lis.Addr()}")
-	errServe := s.Serve(lis)
-	if errServe != nil {
-		log.Fatalf("Failed to serve: #{err}")
+	log.Println("Server listening at port " + port)
+	if err := s.Serve(lis); err != nil {
+		log.Println("Failed to serve ", err)
+		return
 	}
 }
